@@ -1,6 +1,2 @@
-aiogram==3.0.0b7
-pydantic
-requests
-python-dotenv
-pytest
-pydantic-settings
+aiogram>=3.0.0
+python-dotenv>=1.0.0
