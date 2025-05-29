@@ -1,17 +1,18 @@
-from aiogram import F, Router
-from aiogram.types import Message, ReplyKeyboardRemove
-from aiogram.filters import Command
+from aiogram import Router, F
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime, timedelta
+
 from ..keyboards import get_main_keyboard
 
 
-class MeetingCreationStates(StatesGroup):
-    waiting_title = State()
-    waiting_date = State()
-    waiting_time = State()
-    waiting_duration = State()
+class MeetingState(StatesGroup):
+    subject = State()
+    date = State()
+    start_time = State()
+    end_time = State()
+    location = State()
 
 
 class MeetingHandlers:
@@ -21,90 +22,88 @@ class MeetingHandlers:
         self._register_handlers()
 
     def _register_handlers(self):
-        # Обработчик начала создания встречи
         @self.router.message(F.text == "Создать встречу")
-        async def start_meeting_creation(message: Message, state: FSMContext):
-            await message.answer(
-                "Введите название встречи:",
-                reply_markup=ReplyKeyboardRemove()
-            )
-            await state.set_state(MeetingCreationStates.waiting_title)
+        async def create_meeting_start(message: Message, state: FSMContext):
+            await state.set_state(MeetingState.subject)
+            await message.answer("Введите тему встречи:")
 
-        # Обработчик названия встречи
-        @self.router.message(MeetingCreationStates.waiting_title)
-        async def process_title(message: Message, state: FSMContext):
-            await state.update_data(title=message.text)
-            await message.answer("Введите дату встречи (формат: ДД.ММ.ГГГГ):")
-            await state.set_state(MeetingCreationStates.waiting_date)
+        @self.router.message(MeetingState.subject)
+        async def enter_subject(message: Message, state: FSMContext):
+            await state.update_data(subject=message.text)
+            await state.set_state(MeetingState.date)
+            await message.answer("Введите дату встречи в формате ГГГГ-ММ-ДД:")
 
-        # Обработчик даты встречи
-        @self.router.message(MeetingCreationStates.waiting_date)
-        async def process_date(message: Message, state: FSMContext):
+        @self.router.message(MeetingState.date)
+        async def enter_date(message: Message, state: FSMContext):
             try:
-                date = datetime.strptime(message.text, "%d.%m.%Y").date()
-                await state.update_data(date=date)
-                await message.answer("Введите время начала (формат: ЧЧ:ММ):")
-                await state.set_state(MeetingCreationStates.waiting_time)
+                datetime.strptime(message.text, "%Y-%m-%d")
             except ValueError:
-                await message.answer("❌ Неверный формат даты. Введите дату в формате ДД.ММ.ГГГГ:")
+                await message.answer("Неверный формат даты. Введите в формате ГГГГ-ММ-ДД.")
+                return
+            await state.update_data(date=message.text)
+            await state.set_state(MeetingState.start_time)
+            await message.answer("Введите время начала встречи в формате ЧЧ:ММ (24ч):")
 
-        # Обработчик времени встречи
-        @self.router.message(MeetingCreationStates.waiting_time)
-        async def process_time(message: Message, state: FSMContext):
+        @self.router.message(MeetingState.start_time)
+        async def enter_start_time(message: Message, state: FSMContext):
             try:
-                time = datetime.strptime(message.text, "%H:%M").time()
-                data = await state.get_data()
-                start_datetime = datetime.combine(data['date'], time)
-                await state.update_data(start=start_datetime)
-                await message.answer("Введите продолжительность встречи в минутах:")
-                await state.set_state(MeetingCreationStates.waiting_duration)
+                datetime.strptime(message.text, "%H:%M")
             except ValueError:
-                await message.answer("❌ Неверный формат времени. Введите время в формате ЧЧ:ММ:")
+                await message.answer("Неверный формат времени. Введите в формате ЧЧ:ММ.")
+                return
+            await state.update_data(start_time=message.text)
+            await state.set_state(MeetingState.end_time)
+            await message.answer("Введите время окончания встречи в формате ЧЧ:ММ (24ч):")
 
-        # Обработчик продолжительности и сохранение встречи
-        @self.router.message(MeetingCreationStates.waiting_duration)
-        async def process_duration(message: Message, state: FSMContext):
+        @self.router.message(MeetingState.end_time)
+        async def enter_end_time(message: Message, state: FSMContext):
             try:
-                duration = int(message.text)
-                data = await state.get_data()
-
-                meeting_data = {
-                    "subject": data['title'],
-                    "start": {
-                        "dateTime": data['start'].isoformat(),
-                        "timeZone": "UTC"
-                    },
-                    "end": {
-                        "dateTime": (data['start'] + timedelta(minutes=duration)).isoformat(),
-                        "timeZone": "UTC"
-                    },
-                    "location": "Online",
-                    "attendees": []
-                }
-
-                created_meeting = self.calendar.create_meeting(meeting_data)
-
-                await message.answer(
-                    "✅ Встреча успешно создана!\n"
-                    f"📌 Тема: {created_meeting['subject']}\n"
-                    f"⏰ Время: {created_meeting['start']['dateTime']} - {created_meeting['end']['dateTime']}",
-                    reply_markup=get_main_keyboard()
-                )
-                await state.clear()
-
+                datetime.strptime(message.text, "%H:%M")
             except ValueError:
-                await message.answer("❌ Пожалуйста, введите число (продолжительность в минутах):")
+                await message.answer("Неверный формат времени. Введите в формате ЧЧ:ММ.")
+                return
+            await state.update_data(end_time=message.text)
+            await state.set_state(MeetingState.location)
+            await message.answer("Введите место встречи:")
 
-        # Обработчик отмены
-        @self.router.message(Command("cancel"))
-        @self.router.message(F.text.casefold() == "отмена")
-        async def cancel_creation(message: Message, state: FSMContext):
-            current_state = await state.get_state()
-            if current_state is None:
+        @self.router.message(MeetingState.location)
+        async def enter_location(message: Message, state: FSMContext):
+            data = await state.get_data()
+            subject = data["subject"]
+            date = data["date"]
+            start_time = data["start_time"]
+            end_time = message.text
+
+            start = f"{date}T{start_time}:00"
+            end = f"{date}T{data['end_time']}:00"
+
+            meeting = {
+                "subject": subject,
+                "start": {"dateTime": start},
+                "end": {"dateTime": end},
+                "location": message.text
+            }
+
+            self.calendar.create_meeting(meeting)
+            await message.answer("✅ Встреча успешно создана!", reply_markup=get_main_keyboard())
+            await state.clear()
+
+        @self.router.message(F.text == "Мои встречи")
+        async def show_meetings(message: Message):
+            now = datetime.utcnow()
+            end = now + timedelta(days=7)
+            meetings = self.calendar.get_meetings(start_date=now, end_date=end)
+
+            if not meetings:
+                await message.answer("📭 У вас нет запланированных встреч на ближайшую неделю.", reply_markup=get_main_keyboard())
                 return
 
-            await state.clear()
-            await message.answer(
-                "❌ Создание встречи отменено",
-                reply_markup=get_main_keyboard()
-            )
+            response = "📅 Ваши встречи на ближайшую неделю:\n\n"
+            for m in meetings:
+                start_time = datetime.fromisoformat(m['start']['dateTime']).strftime('%d.%m.%Y %H:%M')
+                end_time = datetime.fromisoformat(m['end']['dateTime']).strftime('%H:%M')
+                subject = m['subject']
+                location = m.get('location', 'Не указано')
+                response += f"🔹 <b>{subject}</b>\n🕒 {start_time}–{end_time}\n📍 {location}\n\n"
+
+            await message.answer(response, parse_mode="HTML", reply_markup=get_main_keyboard())
