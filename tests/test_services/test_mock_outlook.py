@@ -24,9 +24,13 @@ class TestMockOutlookService:
         fetched = mock_service.get_meeting(created["id"])
         assert fetched["subject"] == "Test Meeting"
 
-    def test_get_meetings_in_range(self, mock_service):
-        # Очищаем существующие встречи
-        mock_service._load_data = lambda: {"meetings": [], "last_updated": datetime.now().isoformat()}
+    def test_get_meetings_in_range(self, mock_service, tmp_path):
+        # Создаём временный файл для теста
+        test_file = tmp_path / "test_data.json"
+        mock_service.data_file = str(test_file)
+
+        # Очищаем данные
+        mock_service._save_data({"meetings": [], "last_updated": datetime.now().isoformat()})
 
         now = datetime.now()
         meeting_data = {
@@ -34,8 +38,12 @@ class TestMockOutlookService:
             "start": {"dateTime": now.isoformat()},
             "end": {"dateTime": (now + timedelta(hours=1)).isoformat()}
         }
-        mock_service.create_meeting(meeting_data)
 
+        # Создаём встречу
+        created = mock_service.create_meeting(meeting_data)
+        assert "id" in created
+
+        # Получаем встречи
         meetings = mock_service.get_meetings(now - timedelta(days=1), now + timedelta(days=1))
         assert len(meetings) == 1
         assert meetings[0]["subject"] == "Range Test"
