@@ -1329,7 +1329,23 @@
         "contentType": "text"
       },
       "isCancelled": false
+    },
+    {
+      "subject": "\u0430\u044b\u0432\u0430\u0432\u044b\u0430",
+      "start": {
+        "dateTime": "2026-01-10T15:00:00",
+        "timeZone": "UTC"
+      },
+      "end": {
+        "dateTime": "2026-01-10T17:00:00",
+        "timeZone": "UTC"
+      },
+      "location": "Online",
+      "attendees": [],
+      "id": "870c3128-a6f0-43bf-beb7-ea0b5a70c55d",
+      "organizer": "it_manager@company.com",
+      "isCancelled": false
     }
   ],
-  "last_updated": "2025-05-27T23:14:48.440540"
+  "last_updated": "2025-05-29T19:21:43.456425"
 }

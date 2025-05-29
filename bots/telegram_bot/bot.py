@@ -6,15 +6,19 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from interfaces.iconnection import IUserInterface
 from interfaces.ioutlook import ICalendarService
 from .handlers.base import BaseHandler
+from redis.asyncio import Redis
 
 
 class TelegramBot(IUserInterface):
     def __init__(self, token: str, calendar_service: ICalendarService):
+        redis = Redis.from_url("redis://localhost:6379/0")
+        storage = MemoryStorage()
+
         self.bot = Bot(
             token=token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML)
         )
-        self.dp = Dispatcher(storage=MemoryStorage())
+        self.dp = Dispatcher(storage=storage)
         self.router = Router()
         self.calendar_service = calendar_service
 
