@@ -7,7 +7,12 @@ def get_main_keyboard():
     builder.button(text="Мои встречи")
     builder.button(text="Создать встречу")
     builder.button(text="Удалить встречу")
-    return builder.as_markup(resize_keyboard=True)
+    builder.button(text="Настройки уведомлений")
+    builder.adjust(2, 2)
+    return builder.as_markup(
+        resize_keyboard=True,
+        input_field_placeholder="Выберите действие..."
+    )
 
 
 def get_reply_keyboard(options: list[str]):

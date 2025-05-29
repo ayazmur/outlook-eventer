@@ -3,14 +3,16 @@ from services.factory import ServiceFactory
 
 
 async def main():
-    # Создаем сервис календаря
     calendar_service = ServiceFactory.create_calendar_service()
-
-    # Создаем пользовательский интерфейс
     ui = await ServiceFactory.create_user_interface(calendar_service)
 
-    # Запускаем
-    await ui.start()
+    try:
+        await ui.start()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if hasattr(ui, 'stop'):
+            await ui.stop()
 
 
 if __name__ == '__main__':

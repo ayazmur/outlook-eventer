@@ -3,3 +3,5 @@ python-dotenv>=1.0.0
 redis>=4.5.0
 msal
 pytest
+pydantic
+apscheduler
