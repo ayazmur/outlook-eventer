@@ -7,6 +7,7 @@ from typing import List, Dict, Optional
 
 from uuid import uuid4
 
+
 class MockOutlookService(ICalendarService):
     def __init__(self, data_file: str = 'outlook_data.json'):
         self.data_file = data_file

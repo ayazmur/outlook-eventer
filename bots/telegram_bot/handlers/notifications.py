@@ -7,6 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class NotificationSettingsState(StatesGroup):
     waiting_for_start_time = State()
     waiting_for_end_time = State()
@@ -38,7 +39,6 @@ def setup_notification_handlers(router: Router, notification_service):
         except Exception as e:
             logger.error(f"Ошибка в обработчике уведомлений: {e}")
             await message.answer("Произошла ошибка при обработке запроса")
-
 
     @router.message(F.text == "Изменить время уведомлений")
     async def change_notification_time(message: Message, state: FSMContext):

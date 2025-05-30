@@ -4,12 +4,14 @@ from datetime import time
 from typing import Dict
 from pydantic import BaseModel
 
+
 class NotificationSettings(BaseModel):
     chat_id: int
     notify_before_minutes: int = 15
     work_start_time: time = time(9, 0)
     work_end_time: time = time(18, 0)
     enabled: bool = True
+
 
 class NotificationService:
     def __init__(self, storage_file="notification_settings.json"):

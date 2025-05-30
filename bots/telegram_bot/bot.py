@@ -13,6 +13,8 @@ from redis.asyncio import Redis
 from services.notification_service.notification_service import NotificationService
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from .handlers.notifications import setup_notification_handlers
+
+
 class TelegramBot(IUserInterface):
     def __init__(self, token: str, calendar_service: ICalendarService):
         redis = Redis.from_url("redis://localhost:6379/0")
@@ -29,7 +31,7 @@ class TelegramBot(IUserInterface):
         setup_notification_handlers(self.router, self.notification_service)
         self.calendar_service = calendar_service
 
-        # Инициализация обработчиков
+        # Инициализация обработчиковB
         self.handlers = BaseHandler(calendar_service)
         self.dp.include_router(self.handlers.router)
 
@@ -70,6 +72,7 @@ class TelegramBot(IUserInterface):
             f"Место: {meeting.get('location', 'Не указано')}"
         )
         await self.send_message(chat_id, message)
+
     async def start(self):
         await self.dp.start_polling(self.bot)
 

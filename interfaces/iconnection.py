@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
+
+
 class IUserInterface(ABC):
     @abstractmethod
     def start(self):

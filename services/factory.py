@@ -8,6 +8,7 @@ from bots.telegram_bot.bot import TelegramBot
 
 load_dotenv()
 
+
 class ServiceFactory:
     @staticmethod
     def create_calendar_service() -> ICalendarService:
